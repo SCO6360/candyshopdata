@@ -1,0 +1,32 @@
+# Services that hold the "original" data. Generate it first with `candy init`, then `candy up`.
+services:
+  postgres:                      # source 1: the application database
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sweetreach
+      POSTGRES_PASSWORD: sweetreach
+      POSTGRES_DB: sweetreach
+    ports: ["5432:5432"]
+    volumes:
+      # run once, on a fresh volume, in filename order. After `candy grow` use `candy load-db` (or `candy up`) to refresh.
+      - ./data/app_db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./data/app_db/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sweetreach -d sweetreach"]
+      interval: 3s
+      retries: 20
+
+  support-api:                   # source 5: the support-desk REST API
+    build: .
+    restart: unless-stopped
+    ports: ["8800:8800"]
+    environment:
+      SUPPORT_API_TOKEN: demo-token
+      CANDY_API_FLAKY: "1"       # set to 0 for a perfectly healthy API
+    volumes:
+      - ./data:/app/data:ro      # re-reads the JSON whenever `candy grow` rewrites it
+
+volumes:
+  pgdata:
