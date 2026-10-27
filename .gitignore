@@ -218,3 +218,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# candyshopdata: the repo ships the tool, not the data. `candy init` generates everything under data/
+/data/
+/warehouse/
